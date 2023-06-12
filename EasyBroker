@@ -1,0 +1,46 @@
+import requests
+from unittest.mock import patch
+
+
+class EasyBrokerAPI:
+
+  def __init__(self):
+
+    self.url = 'https://api.stagingeb.com/v1/properties?page=1&limit=20"'
+    self.headers = {
+      "accept": "application/json",
+      "X-Authorization": "l7u502p8v46ba3ppgvj5y2aad50lb9",
+    }
+
+  def _get_titles(self, nextpage=''):
+
+    url = self.url if not nextpage else nextpage
+    
+    response = requests.get(url, headers=self.headers)
+    if response.status_code == 200:
+
+      data = response.json()
+      next_page = data['pagination']['next_page']
+
+      for property_data in data["content"]:
+        yield (property_data["title"])
+
+      if next_page:
+        yield from self._get_titles(next_page)
+
+  def print_titles(self):
+    len = 0
+    titles = self._get_titles()
+    for t in titles:
+      print(t)
+
+
+@patch('builtins.print')
+def test_easy_broker_api(mock_print):
+
+  api = EasyBrokerAPI()
+  api.print_titles()
+
+  assert mock_print.call_count == 900
+
+test_easy_broker_api()
